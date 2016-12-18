@@ -17,7 +17,7 @@ namespace ABCCompanyService.Models.Api
         /// </summary>
         public int absenceRequestId { get; set; }
 
-        /// <summary>
+        /// <summary> 
         /// User Id
         /// </summary>
         public string userId { get; set; }
