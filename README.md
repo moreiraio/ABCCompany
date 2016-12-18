@@ -5,10 +5,11 @@
 ### Business Requirements
 
 Develop an API back-end using ASP.NET Core, which can:
+```
 1. Allow the users to login with their Google email.
 2. Add an absence request to the system.
 3. Allow the Admin can approve or decline the request.
-4. Approved requests are shared automatically in the user’s calendar.### Software PlatformFor plataform as requested it was used ASP.NET Core```
+4. Approved requests are shared automatically in the user’s calendar.```### Software PlatformFor plataform as requested it was used ASP.NET Core```
  asp.core
  version": "1.1.0
 ```
