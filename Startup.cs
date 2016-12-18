@@ -26,15 +26,28 @@ using Microsoft.Extensions.PlatformAbstractions;
 
 namespace ABCCompanyService
 {
-    public class ProcessingTimeMiddleware
+
+    /// <summary>
+    /// ProcessingAccessMiddleware
+    /// </summary>
+    public class ProcessingAccessMiddleware
     {
         private readonly RequestDelegate _next;
 
-        public ProcessingTimeMiddleware(RequestDelegate next)
+        /// <summary>
+        /// Custom Security Middleware
+        /// </summary>
+        /// <param name="next"></param>
+        public ProcessingAccessMiddleware(RequestDelegate next)
         {
             _next = next;
         }
 
+        /// <summary>
+        /// Denies access to users withoud role admin and bypass this paths to a standard 401 request
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public async Task Invoke(HttpContext context)
         {
             if (context.Request.Path.Equals("/Account/AccessDenied") || context.Request.Path.Equals("/Account/LogOff") || context.Request.Path.Equals("/Account/LogIn"))
@@ -47,19 +60,33 @@ namespace ABCCompanyService
         }
     }
 
+    /// <summary>
+    /// MiddlewareExtensions
+    /// </summary>
     public static class MiddlewareExtensions
     {
-        public static IApplicationBuilder UseProcessingTimeMiddleware(this IApplicationBuilder builder)
+        /// <summary>
+        /// UseProcessingccessMiddleware
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseProcessingccessMiddleware(this IApplicationBuilder builder)
         {
-            return builder.UseMiddleware<ProcessingTimeMiddleware>();
+            return builder.UseMiddleware<ProcessingAccessMiddleware>();
         }
     }
 
-
-
+    /// <summary>
+    /// Startup
+    /// </summary>
     public class Startup
     {
         string root;
+
+        /// <summary>
+        /// Startup
+        /// </summary>
+        /// <param name="env"></param>
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -67,7 +94,7 @@ namespace ABCCompanyService
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-           
+
             if (env.IsDevelopment())
             {
                 // For more details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
@@ -79,6 +106,10 @@ namespace ABCCompanyService
             Configuration = builder.Build();
         }
 
+
+        /// <summary>
+        /// Configuration
+        /// </summary>
         public IConfigurationRoot Configuration { get; }
 
 
@@ -87,7 +118,11 @@ namespace ABCCompanyService
             var app = PlatformServices.Default.Application;
             return System.IO.Path.Combine(app.ApplicationBasePath, "ABCCompany.xml");
         }
-        // This method gets called by the runtime. Use this method to add services to the container.
+
+        /// <summary>
+        /// his method gets called by the runtime. Use this method to add services to the container.
+        /// </summary>
+        /// <param name="services"></param>
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Filename = ApplicationDbContext.db"));
@@ -108,7 +143,12 @@ namespace ABCCompanyService
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// <summary>
+        /// This method gets called by the runtime.Use this method to configure the HTTP request pipeline.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
+        /// <param name="loggerFactory"></param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -118,9 +158,6 @@ namespace ABCCompanyService
             using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>()
                        .CreateScope())
             {
-                //serviceScope.ServiceProvider.GetService<ApplicationDbContext>().Database.Migrate();
-
-
                 var userManager = app.ApplicationServices.GetService<UserManager<ApplicationUser>>();
                 var roleManager = app.ApplicationServices.GetService<RoleManager<IdentityRole>>();
 
@@ -128,7 +165,7 @@ namespace ABCCompanyService
 
             }
 
-            app.UseMiddleware<ProcessingTimeMiddleware>();
+            app.UseMiddleware<ProcessingAccessMiddleware>();
 
             app.UseIdentity();
 
@@ -138,7 +175,6 @@ namespace ABCCompanyService
                 AutomaticChallenge = true,
                 LoginPath = null,
                 AuthenticationScheme = "Identity.External",
-                //AuthenticationScheme = "Identity.Application",
                 Events = new CookieAuthenticationEvents
                 {
                     OnRedirectToLogin = async ctx =>
@@ -147,16 +183,8 @@ namespace ABCCompanyService
                         {
                             ctx.Response.StatusCode = 401;
                         }
-                        //if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == 200)
-                        //{
-                        //    ctx.Response.StatusCode = 401;
-                        //}
-                        //else
-                        //{
-                        //    ctx.Response.Redirect(ctx.RedirectUri);
-                        //}
+                      
                         await Task.FromResult(0);
-                        //await Task.Yield();
                     },
                     OnRedirectToAccessDenied = async ctx =>
                     {
@@ -170,15 +198,14 @@ namespace ABCCompanyService
                 }
             });
 
-       
+
             GoogleOptions ops = new GoogleOptions()
             {
-
                 // ClientId = Configuration["Authentication:Google:ClientId"],
                 // ClientSecret = Configuration["Authentication:Google:ClientSecret"],
 
-                 ClientId = Configuration["ClientId"],
-                 ClientSecret = Configuration["ClientSecret"],
+                ClientId = Configuration["ClientId"],
+                ClientSecret = Configuration["ClientSecret"],
 
                 SaveTokens = true,
                 Events = new OAuthEvents

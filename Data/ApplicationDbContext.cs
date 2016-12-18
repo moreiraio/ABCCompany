@@ -8,13 +8,25 @@ using ABCCompanyService.Models;
 
 namespace ABCCompanyService.Data
 {
-   
 
+
+    /// <summary>
+    /// ApplicationDbContext
+    /// </summary>
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+
+        /// <summary>
+        /// AbsenceRequests
+        /// </summary>
         public DbSet<AbsenceRequest> AbsenceRequests { get; set; }
 
+
+        /// <summary>
+        /// ApplicationDbContext
+        /// </summary>
+        /// <param name="options"></param>
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -25,22 +37,28 @@ namespace ABCCompanyService.Data
         //    optionsBuilder.UseSqlite("Filename=MyDatabase.db");
         //}
 
+
+        /// <summary>
+        /// Customize the ASP.NET Identity model and override the defaults if needed.
+        /// </summary>
+        /// <param name="builder"></param>
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             // Customize the ASP.NET Identity model and override the defaults if needed.
             // For example, you can rename the ASP.NET Identity table names and more.
             // Add your customizations after calling base.OnModelCreating(builder);
-
-
-
         }
 
+
+        /// <summary>
+        /// Create the default application roles
+        /// </summary>
+        /// <param name="userMgr"></param>
+        /// <param name="roleMgr"></param>
+        /// <returns></returns>
         public async Task<bool> EnsureSeedData(Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userMgr, Microsoft.AspNetCore.Identity.RoleManager<IdentityRole> roleMgr)
         {
-            //if (!this.Users.Any(u => u.UserName == "admin@mydomain.com"))
-            //{
-            // Add 'admin' role
             var adminRole = await roleMgr.FindByNameAsync("Admin");
             if (adminRole == null)
             {
@@ -54,21 +72,7 @@ namespace ABCCompanyService.Data
                 userRole = new IdentityRole("User");
                 await roleMgr.CreateAsync(userRole);
             }
-
-            // create admin user
-            //var adminUser = new ApplicationUser();
-            //adminUser.UserName = "admin@mydomain.com";
-            //adminUser.Email = "admin@mydomain.com";
-
-            //await userMgr.CreateAsync(adminUser, "MYP@55word");
-
-            //await userMgr.SetLockoutEnabledAsync(adminUser, false);
-            //await userMgr.AddToRoleAsync(adminUser, "admin");
-            //}
             return true;
         }
-
-
-
     }
 }
