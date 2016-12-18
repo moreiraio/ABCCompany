@@ -1,5 +1,5 @@
 # ABCCompany
-> Livit Exercice.
+> Livit Exercise.
 
 
 ### Business Requirements
@@ -8,8 +8,15 @@ Develop an API back-end using ASP.NET Core, which can:
 ```
 1. Allow the users to login with their Google email.
 2. Add an absence request to the system.
-3. Allow the Admin can approve or decline the request.
-4. Approved requests are shared automatically in the user’s calendar.```### Software PlatformFor plataform as requested it was used ASP.NET Core```
+3. Admin can approve or decline the request.
+4. Approved requests are shared automatically in the user’s calendar.
+```
+### Software Platform
+
+For platform as requested it was used ASP.NET Core, the latest version can be download from the following link:
+https://www.microsoft.com/net/download/core#/current
+
+```
  asp.core
  version": "1.1.0
 ```
@@ -25,7 +32,7 @@ On the appsettings.json file the folowing settings need to be configured:
 ```
 ### Installation and Setup
 
-After gettinf the source code open an command line on the source folder and run the following commands:
+After getting the source code open an command line on the source folder and run the following commands:
  
 setup the database and create the model
 ```sh
@@ -56,4 +63,5 @@ dotnet run
 Vitor Moreira [@vitormoreira] (https://twitter.com/vitormoreira)  vitor.moreira@gmail.com
 
 [https://github.com/vrmmoreira/ABCCompany](https://github.com/vrmmoreira/)
+
 

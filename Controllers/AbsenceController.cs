@@ -273,6 +273,7 @@ namespace ABCCompanyService.Controllers
                 };
             }
         }
+
         /// <summary>
         ///  Aproves an absence, only users with role Admin can aprove
         /// </summary>
@@ -289,60 +290,140 @@ namespace ABCCompanyService.Controllers
                 var result = _context.AbsenceRequests.Where(u => u.AbsenceRequestId == absenceRequestId).FirstOrDefault();
                 if (result != null)
                 {
-                    var token2 = info.AuthenticationTokens.Where(u => u.Name == "access_token").FirstOrDefault().Value.ToString();
-
-                    var userId = result.UserId;
-                    var calendarId = result.UserId;
-
-                    var service = GetcalendarService(info);
-
-                    var c = await service.Calendars.Get(calendarId).ExecuteAsync();
-
-                    if (result.StartEventDateTime.DayOfWeek == DayOfWeek.Saturday)
-                        result.StartEventDateTime.AddDays(2);
-
-                    if (result.StartEventDateTime.DayOfWeek == DayOfWeek.Sunday)
-                        result.StartEventDateTime.AddDays(1);
-
-                    Event myEvent = new Event
+                    if (result.Status != AbsenceRequestStatus.Pending)
                     {
-                        Summary = "Absence",
-                        Description = result.Description,
-                        Reminders = new Event.RemindersData() { UseDefault = false },
-                        //Location = "Somewhere",
-                        Locked = true,
-                        Start = new EventDateTime()
+                        var token2 = info.AuthenticationTokens.Where(u => u.Name == "access_token").FirstOrDefault().Value.ToString();
+
+                        var userId = result.UserId;
+                        var calendarId = result.UserId;
+
+                        var service = GetcalendarService(info);
+
+                        var c = await service.Calendars.Get(calendarId).ExecuteAsync();
+
+                        if (result.StartEventDateTime.DayOfWeek == DayOfWeek.Saturday)
+                            result.StartEventDateTime.AddDays(2);
+
+                        if (result.StartEventDateTime.DayOfWeek == DayOfWeek.Sunday)
+                            result.StartEventDateTime.AddDays(1);
+
+                        Event myEvent = new Event
                         {
-                            DateTime = new DateTime(result.StartEventDateTime.Year, result.StartEventDateTime.Month, result.StartEventDateTime.Day, 9, 0, 0, 0),
-                            TimeZone = c.TimeZone
-                        },
-                        End = new EventDateTime()
+                            Summary = "Absence",
+                            Description = result.Description,
+                            Reminders = new Event.RemindersData() { UseDefault = false },
+                            //Location = "Somewhere",
+                            Locked = true,
+                            Start = new EventDateTime()
+                            {
+                                DateTime = new DateTime(result.StartEventDateTime.Year, result.StartEventDateTime.Month, result.StartEventDateTime.Day, 9, 0, 0, 0),
+                                TimeZone = c.TimeZone
+                            },
+                            End = new EventDateTime()
+                            {
+                                DateTime = new DateTime(result.StartEventDateTime.Year, result.StartEventDateTime.Month, result.StartEventDateTime.Day, 18, 0, 0, 0),
+                                TimeZone = c.TimeZone
+                            },
+                            Recurrence = new String[] { string.Format("RRULE:FREQ=DAILY;UNTIL={0}{1}{2}T000000Z;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR;WKST=SU;", result.EndEventDateTime.Year, result.EndEventDateTime.Month.ToString().PadLeft(2, '0'), result.EndEventDateTime.Day.ToString().PadLeft(2, '0')) },
+                        };
+
+                        Event recurringEvent = await service.Events.Insert(myEvent, calendarId).ExecuteAsync();
+
+                        result.GoogleEventId = recurringEvent.Id;
+                        result.Status = AbsenceRequestStatus.Aproved;
+                        result.StatusDateTime = DateTime.Now;
+                        result.StatusChangedBy = userid;
+
+                        _context.Update(result);
+                        await _context.SaveChangesAsync();
+
+                        return new ApiResult<AproveAbsenceResponse>()
                         {
-                            DateTime = new DateTime(result.StartEventDateTime.Year, result.StartEventDateTime.Month, result.StartEventDateTime.Day, 18, 0, 0, 0),
-                            TimeZone = c.TimeZone
-                        },
-                        Recurrence = new String[] { string.Format("RRULE:FREQ=DAILY;UNTIL={0}{1}{2}T000000Z;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR;WKST=SU;", result.EndEventDateTime.Year, result.EndEventDateTime.Month.ToString().PadLeft(2, '0'), result.EndEventDateTime.Day.ToString().PadLeft(2, '0')) },
-                    };
+                            Result = new AproveAbsenceResponse()
+                            {
+                                googleEventId = recurringEvent.Id
+                            },
+                            Message = Models.Api.ApiResult<AproveAbsenceResponse>.SuccessMessage
 
-                    Event recurringEvent = await service.Events.Insert(myEvent, calendarId).ExecuteAsync();
-
-                    result.GoogleEventId = recurringEvent.Id;
-                    result.Status = AbsenceRequestStatus.Aproved;
-                    result.StatusDateTime = DateTime.Now;
-                    result.StatusChangedBy = userid;
-
-                    _context.Update(result);
-                    await _context.SaveChangesAsync();
-
+                        };
+                    }
+                    else
+                    {
+                        Response.StatusCode = 500;
+                        return new ApiResult<AproveAbsenceResponse>()
+                        {
+                            Result = new AproveAbsenceResponse()
+                            {
+                            },
+                            Message = "Absence Resquest status can´t be changed"
+                        };
+                    }
+                }
+                else
+                {
+                    Response.StatusCode = 500;
                     return new ApiResult<AproveAbsenceResponse>()
                     {
-                        Result = new AproveAbsenceResponse()
-                        {
-                            googleEventId = recurringEvent.Id
-                        },
-                        Message = Models.Api.ApiResult<AproveAbsenceResponse>.SuccessMessage
-
+                        Message = Models.Api.ApiResult<AproveAbsenceResponse>.ErrorMessage
                     };
+                }
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                _logger.LogError(ex.Message, ex);
+                return new ApiResult<AproveAbsenceResponse>()
+                {
+                    Message = Models.Api.ApiResult<AproveAbsenceResponse>.ErrorMessage
+                };
+            }
+        }
+
+        /// <summary>
+        ///  Aproves an absence, only users with role Admin can aprove
+        /// </summary>
+        /// <param name="absenceRequestId"></param>
+        /// <returns></returns>
+        [HttpPut("DeclineAbsence")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ApiResult<AproveAbsenceResponse>> DeclineAbsence([FromBody] int absenceRequestId)
+        {
+            try
+            {
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+                var userid = info.Principal.FindFirstValue(ClaimTypes.Email);
+                var result = _context.AbsenceRequests.Where(u => u.AbsenceRequestId == absenceRequestId).FirstOrDefault();
+                if (result != null)
+                {
+                    if (result.Status != AbsenceRequestStatus.Pending)
+                    {
+
+                        result.Status = AbsenceRequestStatus.Aproved;
+                        result.StatusDateTime = DateTime.Now;
+                        result.StatusChangedBy = userid;
+
+                        _context.Update(result);
+                        await _context.SaveChangesAsync();
+
+                        return new ApiResult<AproveAbsenceResponse>()
+                        {
+                            Result = new AproveAbsenceResponse()
+                            {
+                            },
+                            Message = Models.Api.ApiResult<AproveAbsenceResponse>.SuccessMessage
+                        };
+                    }
+                    else
+                    {
+                        Response.StatusCode = 500;
+                        return new ApiResult<AproveAbsenceResponse>()
+                        {
+                            Result = new AproveAbsenceResponse()
+                            {
+                            },
+                            Message = "Absence Resquest status can´t be changed"
+                        };
+                    }
                 }
                 else
                 {
