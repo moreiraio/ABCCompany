@@ -32,13 +32,6 @@ namespace ABCCompanyService.Models.Api
         /// </summary>
         public string description { get; set; }
 
-        /// <summary>
-        /// Avaible Status (Pending,Aproved,Declined)
-        /// </summary>
-        [EnumDataType(typeof(AbsenceRequestStatus))]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public AbsenceRequestStatus status { get; set; }
-
 
         /// <summary>
         /// Default constructor

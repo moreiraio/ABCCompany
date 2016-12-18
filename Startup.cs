@@ -293,8 +293,17 @@ namespace ABCCompanyService
         }
     }
 
+
+    /// <summary>
+    /// AutoMapperProfileConfiguration
+    /// </summary>
+
     public class AutoMapperProfileConfiguration : Profile
     {
+
+        /// <summary>
+        /// Configure
+        /// </summary>
         protected override void Configure()
         {
             CreateMap<ABCCompanyService.Models.Api.AbsenceRequestApi, ABCCompanyService.Models.Data.AbsenceRequest>().ReverseMap();

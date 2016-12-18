@@ -401,7 +401,7 @@ namespace ABCCompanyService.Controllers
                     if (result.Status == AbsenceRequestStatus.Pending)
                     {
 
-                        result.Status = AbsenceRequestStatus.Aproved;
+                        result.Status = AbsenceRequestStatus.Declined;
                         result.StatusDateTime = DateTime.Now;
                         result.StatusChangedBy = userid;
 
