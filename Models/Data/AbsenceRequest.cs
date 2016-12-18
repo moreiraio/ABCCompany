@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ABCCompanyService.Models
+namespace ABCCompanyService.Models.Data
 {
     /// <summary>
     /// Absence Request Status Enum

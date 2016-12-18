@@ -23,6 +23,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using Microsoft.Extensions.PlatformAbstractions;
+using AutoMapper;
+using ABCCompanyService.Models.Data;
 
 namespace ABCCompanyService
 {
@@ -104,6 +106,11 @@ namespace ABCCompanyService
             builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
+
+            _mapperConfiguration = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new AutoMapperProfileConfiguration());
+            });
         }
 
 
@@ -112,6 +119,8 @@ namespace ABCCompanyService
         /// </summary>
         public IConfigurationRoot Configuration { get; }
 
+
+        private MapperConfiguration _mapperConfiguration { get; set; }
 
         private string GetXmlCommentsPath()
         {
@@ -141,7 +150,15 @@ namespace ABCCompanyService
                 options.DescribeAllEnumsAsStrings();
                 options.IncludeXmlComments(GetXmlCommentsPath());
             });
+
+            services.AddSingleton<IMapper>(sp => _mapperConfiguration.CreateMapper());
         }
+
+        /// <summary>
+        /// Mapper
+        /// </summary>
+        public IMapper Mapper { get; set; }
+        private MapperConfiguration MapperConfiguration { get; set; }
 
         /// <summary>
         /// This method gets called by the runtime.Use this method to configure the HTTP request pipeline.
@@ -263,7 +280,28 @@ namespace ABCCompanyService
             // Enable middleware to serve swagger-ui assets (HTML, JS, CSS etc.)
             app.UseSwaggerUi();
 
+            MapperConfiguration MapperConfiguration = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<ABCCompanyService.Models.Api.AbsenceRequestApi, ABCCompanyService.Models.Data.AbsenceRequest>().ReverseMap();
+                cfg.CreateMap<ABCCompanyService.Models.Data.AbsenceRequest, ABCCompanyService.Models.Api.AbsenceRequestApi>().ReverseMap();
+                cfg.CreateMap<ABCCompanyService.Models.Api.AbsenceEvent, ABCCompanyService.Models.Data.AbsenceRequest>().ReverseMap();
+            });
 
+            Mapper = MapperConfiguration.CreateMapper();
+
+
+        }
+    }
+
+    public class AutoMapperProfileConfiguration : Profile
+    {
+        protected override void Configure()
+        {
+            CreateMap<ABCCompanyService.Models.Api.AbsenceRequestApi, ABCCompanyService.Models.Data.AbsenceRequest>().ReverseMap();
+            CreateMap<ABCCompanyService.Models.Data.AbsenceRequest, ABCCompanyService.Models.Api.AbsenceRequestApi>().ReverseMap();
+            CreateMap<ABCCompanyService.Models.Api.AbsenceEvent, ABCCompanyService.Models.Data.AbsenceRequest>().ReverseMap();
+
+          
         }
     }
 }

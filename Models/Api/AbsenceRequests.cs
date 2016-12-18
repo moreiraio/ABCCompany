@@ -13,6 +13,6 @@ namespace ABCCompanyService.Models.Api
         /// <summary>
         /// Absence Requests
         /// </summary>
-        public List<AbsenceRequest> absenceRequests { get; set; }
+        public List<AbsenceRequestApi> absenceRequests { get; set; }
     }
 }

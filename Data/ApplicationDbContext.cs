@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ABCCompanyService.Models;
+using ABCCompanyService.Models.Data;
 
 namespace ABCCompanyService.Data
 {

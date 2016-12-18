@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using ABCCompanyService.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -25,6 +24,8 @@ using System.Reflection;
 using ABCCompanyService.Models.Api;
 using System.IO;
 using Microsoft.Extensions.Configuration;
+using ABCCompanyService.Models.Data;
+using AutoMapper;
 
 namespace ABCCompanyService.Controllers
 {
@@ -41,6 +42,7 @@ namespace ABCCompanyService.Controllers
         private ApplicationDbContext _context;
         private readonly ILogger _logger;
         private IConfiguration _configuration;
+        private IMapper _mapper;
 
         /// <summary>
         /// Controller for managing absences 
@@ -51,11 +53,13 @@ namespace ABCCompanyService.Controllers
         /// <param name="dbContext"></param>
         /// <param name="loggerFactory"></param>
         /// <param name="configuration"></param>
+        /// <param name="mapper"></param>
         public AbsenceController(
            UserManager<ApplicationUser> userManager,
            SignInManager<ApplicationUser> signInManager,
            RoleManager<IdentityRole> roleManager,
            ApplicationDbContext dbContext,
+           IMapper mapper,
            IConfiguration configuration,
            ILoggerFactory loggerFactory)
         {
@@ -65,6 +69,7 @@ namespace ABCCompanyService.Controllers
             _configuration = configuration;
             _logger = loggerFactory.CreateLogger<AbsenceController>();
             _context = dbContext;
+            _mapper = mapper;
         }
 
 
@@ -123,16 +128,13 @@ namespace ABCCompanyService.Controllers
                 var userId = info.Principal.FindFirstValue(ClaimTypes.Email);
                 var token2 = info.AuthenticationTokens.Where(u => u.Name == "access_token").FirstOrDefault().Value.ToString();
 
-                var result = _context.AbsenceRequests.Add(new AbsenceRequest()
-                {
-                    CreatedDateTime = DateTime.Now,
-                    Description = absenceEvent.description,
-                    StartEventDateTime = absenceEvent.startEventDateTime,
-                    EndEventDateTime = absenceEvent.endEventDateTime,
-                    Status = AbsenceRequestStatus.Pending,
-                    StatusDateTime = DateTime.Now,
-                    UserId = userId
-                });
+                Models.Data.AbsenceRequest absenceRequest = _mapper.Map<AbsenceEvent, Models.Data.AbsenceRequest>(absenceEvent);
+                absenceRequest.CreatedDateTime = DateTime.Now;
+                absenceRequest.StatusDateTime = DateTime.Now;
+                absenceRequest.UserId = userId;
+
+                var result = _context.AbsenceRequests.Add(absenceRequest);
+
                 await _context.SaveChangesAsync();
 
                 var groupId = _configuration["GroupId"];
@@ -189,7 +191,7 @@ namespace ABCCompanyService.Controllers
         /// <param name="to"></param>
         /// <returns></returns>
         [HttpGet("status/{status}/from/{from}/to/{to}", Name = "Absences")]
-        public async Task<object> GetAbsences(AbsenceRequestStatus status, DateTime from, DateTime to)
+        public async Task<ApiResult<AbsenceRequests>> GetAbsences(AbsenceRequestStatus status, DateTime from, DateTime to)
         {
             try
             {
@@ -214,11 +216,12 @@ namespace ABCCompanyService.Controllers
 
                 var result = _context.AbsenceRequests.Where(u => u.UserId == email && u.Status == status && (u.CreatedDateTime >= from && u.CreatedDateTime <= to)).ToList();
 
+
                 return new ApiResult<AbsenceRequests>()
                 {
                     Result = new AbsenceRequests()
                     {
-                        absenceRequests = result
+                        absenceRequests = _mapper.Map<List<Models.Data.AbsenceRequest>, List<AbsenceRequestApi>>(result)
                     },
                     Message = Models.Api.ApiResult<AbsenceRequests>.SuccessMessage
                 };
@@ -236,7 +239,7 @@ namespace ABCCompanyService.Controllers
             {
                 Response.StatusCode = 500;
                 _logger.LogError(ex.Message, ex);
-                return new ApiResult<AbsenceRequests>()
+                return new ApiResult<Models.Api.AbsenceRequests>()
                 {
                     Message = Models.Api.ApiResult<AbsenceRequests>.ErrorMessage
                 };
@@ -258,7 +261,7 @@ namespace ABCCompanyService.Controllers
                 {
                     Result = new AbsenceRequests()
                     {
-                        absenceRequests = result
+                        absenceRequests = _mapper.Map<List<Models.Data.AbsenceRequest>, List<AbsenceRequestApi>>(result)
                     },
                     Message = Models.Api.ApiResult<AbsenceRequests>.SuccessMessage
                 };
@@ -286,11 +289,11 @@ namespace ABCCompanyService.Controllers
             try
             {
                 var info = await _signInManager.GetExternalLoginInfoAsync();
-                var userid=   info.Principal.FindFirstValue(ClaimTypes.Email);
+                var userid = info.Principal.FindFirstValue(ClaimTypes.Email);
                 var result = _context.AbsenceRequests.Where(u => u.AbsenceRequestId == absenceRequestId).FirstOrDefault();
                 if (result != null)
                 {
-                    if (result.Status != AbsenceRequestStatus.Pending)
+                    if (result.Status == AbsenceRequestStatus.Pending)
                     {
                         var token2 = info.AuthenticationTokens.Where(u => u.Name == "access_token").FirstOrDefault().Value.ToString();
 
@@ -395,7 +398,7 @@ namespace ABCCompanyService.Controllers
                 var result = _context.AbsenceRequests.Where(u => u.AbsenceRequestId == absenceRequestId).FirstOrDefault();
                 if (result != null)
                 {
-                    if (result.Status != AbsenceRequestStatus.Pending)
+                    if (result.Status == AbsenceRequestStatus.Pending)
                     {
 
                         result.Status = AbsenceRequestStatus.Aproved;
