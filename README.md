@@ -62,8 +62,9 @@ dotnet run
 
 ## About
 
-Vitor Moreira [@vitormoreira] (https://twitter.com/vitormoreira)  vitor.moreira@gmail.com
+Vitor Moreira [@vitormoreira](https://twitter.com/vitormoreira)  
+vitor.moreira@gmail.com
 
-[https://github.com/vrmmoreira/ABCCompany](https://github.com/vrmmoreira/)
+[https://github.com/vrmmoreira/](https://github.com/vrmmoreira/)
 
 
