@@ -21,6 +21,8 @@ https://www.microsoft.com/net/download/core#/current
  version": "1.1.0
 ```
 
+and for data storage the default used is sql lite.
+
 ### Configuration
 
 On the appsettings.json file the folowing settings need to be configured:
