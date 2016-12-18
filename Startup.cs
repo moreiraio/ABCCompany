@@ -85,7 +85,7 @@ namespace ABCCompanyService
         private string GetXmlCommentsPath()
         {
             var app = PlatformServices.Default.Application;
-            return System.IO.Path.Combine(app.ApplicationBasePath, "WebApplication2.xml");
+            return System.IO.Path.Combine(app.ApplicationBasePath, "ABCCompany.xml");
         }
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
