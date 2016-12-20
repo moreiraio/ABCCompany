@@ -14,5 +14,6 @@ namespace ABCCompanyService.Models.Api
         /// Absence Requests
         /// </summary>
         public List<AbsenceRequestApi> absenceRequests { get; set; }
+
     }
 }
